@@ -1,0 +1,243 @@
+Data Model
+1. Purpose
+
+This document defines the logical and analytical data model for the SAP HANA Sales & Inventory Intelligence platform.
+
+The model is designed to separate transactional business concepts from reusable analytical structures.
+
+2. SAP Source Concepts
+
+The solution is based on common SAP SD/MM data concepts.
+
+Sales
+
+VBAK — Sales Order Header
+
+VBAP — Sales Order Item
+
+Customer
+
+KNA1 — Customer Master
+
+Material
+
+MARA — Material Master
+
+MAKT — Material Description
+
+MARC — Material/Plant Data
+
+Inventory
+
+MARD — Storage Location Stock
+
+The portfolio implementation will use synthetic/demo data.
+
+3. Analytical Model
+
+The analytical model contains dimension and fact structures.
+
+Dimensions
+DIM_CUSTOMER
+DIM_PRODUCT
+DIM_PLANT
+DIM_DATE
+
+Facts
+FACT_SALES
+FACT_INVENTORY
+
+4. DIM_CUSTOMER
+Field	Description
+CUSTOMER_ID	Unique customer identifier
+CUSTOMER_NAME	Customer name
+COUNTRY	Customer country
+REGION	Customer region
+CUSTOMER_GROUP	Customer classification
+5. DIM_PRODUCT
+Field	Description
+PRODUCT_ID	Unique product identifier
+PRODUCT_NAME	Product description
+PRODUCT_CATEGORY	Product category
+PRODUCT_GROUP	Product group
+UNIT	Base unit
+STANDARD_COST	Standard product cost
+LIST_PRICE	Standard/list price
+6. DIM_PLANT
+Field	Description
+PLANT_ID	Plant identifier
+PLANT_NAME	Plant description
+COUNTRY	Plant country
+REGION	Plant region
+7. DIM_DATE
+Field	Description
+DATE_ID	Date key
+FULL_DATE	Calendar date
+DAY	Day number
+MONTH	Month number
+MONTH_NAME	Month name
+QUARTER	Quarter
+YEAR	Calendar year
+WEEK	Calendar week
+8. FACT_SALES
+Grain
+
+One row represents one sales-order item.
+
+Fields
+Field	Description
+SALES_ORDER_ID	Sales order identifier
+ITEM_ID	Sales order item identifier
+CUSTOMER_ID	Customer identifier
+PRODUCT_ID	Product identifier
+PLANT_ID	Plant identifier
+DATE_ID	Order date key
+QUANTITY	Quantity sold
+UNIT_PRICE	Unit selling price
+DISCOUNT	Discount amount
+NET_VALUE	Net sales value
+COST	Product cost
+CURRENCY	Transaction currency
+9. FACT_INVENTORY
+Grain
+
+One row represents inventory for a product, plant, storage location and snapshot date.
+
+Fields
+Field	Description
+PRODUCT_ID	Product identifier
+PLANT_ID	Plant identifier
+STORAGE_LOCATION	Storage location
+DATE_ID	Inventory snapshot date
+STOCK_QTY	Current stock quantity
+SAFETY_STOCK	Required safety stock
+REORDER_POINT	Reorder threshold
+UNIT_COST	Product unit cost
+STOCK_VALUE	Inventory value
+10. Logical Relationships
+                         DIM_DATE
+                            │
+                            │
+                            ▼
+DIM_CUSTOMER ──────── FACT_SALES ──────── DIM_PRODUCT
+                            │
+                            │
+                            ▼
+                        DIM_PLANT
+
+
+                         DIM_DATE
+                            │
+                            ▼
+                     FACT_INVENTORY
+                       /         \
+                      /           \
+                     ▼             ▼
+              DIM_PRODUCT      DIM_PLANT
+
+11. Fact Table Grain
+FACT_SALES
+
+The grain is one sales-order item.
+
+Example:
+
+Sales Order = 100001
+Item = 10
+Product = P100
+Quantity = 5
+
+
+represents one fact row.
+
+FACT_INVENTORY
+
+The grain is:
+
+Product + Plant + Storage Location + Snapshot Date
+
+
+This grain must be maintained consistently to avoid incorrect inventory aggregation.
+
+12. Business Measures
+Revenue
+SUM(NET_VALUE)
+
+Cost
+SUM(COST)
+
+Gross Profit
+Revenue - Cost
+
+Gross Margin Percentage
+(Gross Profit / Revenue) × 100
+
+Inventory Value
+Stock Quantity × Unit Cost
+
+Days of Stock
+Current Stock / Average Daily Consumption
+
+13. Analytical Design Principle
+
+The analytical model separates:
+
+Measures and business events into fact tables.
+
+Descriptive business context into dimension tables.
+
+This structure supports reusable analytical models and consistent KPI calculations.
+
+14. Data Quality Considerations
+
+The following conditions should be validated:
+
+Duplicate customer identifiers
+
+Duplicate product identifiers
+
+Missing customer references
+
+Missing product references
+
+Invalid plant references
+
+Invalid dates
+
+Negative inventory quantities
+
+Missing costs
+
+Missing prices
+
+Invalid currencies
+
+15. Future Extensions
+
+Potential future dimensions include:
+
+Sales Organization
+
+Distribution Channel
+
+Division
+
+Supplier
+
+Currency
+
+Promotion
+
+Employee/Sales Representative
+
+Potential future facts include:
+
+Delivery
+
+Billing
+
+Purchase Order
+
+Goods Movement
+
+Returns
